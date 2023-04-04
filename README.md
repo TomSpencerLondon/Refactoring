@@ -29,13 +29,21 @@ length width and depth. Products have prices so the Sellable abstraction is rele
 Classes can share a stable interface and have different functionality as they implement the interface. Code that works with
 Sellable could include Products such as Warranty or other services we might want to sell.
 
-#### Dep modules
+#### Deep modules
 Modules that have a lot of functionality which are exposed via a simple interface are called Deep modules.
 These modules are easier to maintain and add more functionality.
 
 ![image](https://user-images.githubusercontent.com/27693622/229743263-77ff51bb-5d8e-4d8c-b83a-9477ae722626.png)
 
+Simpler interfaces mean that we give users of our interface less to learn and less opportunity for the interface to break
+client code.
+
+### SOLID
+
+#### Single Responsibility Principle
+Entities should have one reason to change and encode one part of domain knowledge. Breaking this principle can
+lead to high coupling.
 
 
-### Code Smells
+
 
