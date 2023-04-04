@@ -33,6 +33,8 @@ Sellable could include Products such as Warranty or other services we might want
 Modules that have a lot of functionality which are exposed via a simple interface are called Deep modules.
 These modules are easier to maintain and add more functionality.
 
+![image](https://user-images.githubusercontent.com/27693622/229743263-77ff51bb-5d8e-4d8c-b83a-9477ae722626.png)
+
 
 
 ### Code Smells
