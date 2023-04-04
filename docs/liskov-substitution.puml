@@ -1,0 +1,20 @@
+@startuml
+
+interface Animal {
+    move()
+}
+
+class Bird {
+    move()
+}
+
+class Fish {
+    move()
+}
+
+
+Animal <|-- Bird
+Animal <|-- Fish
+
+
+@enduml

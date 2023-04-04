@@ -1,0 +1,21 @@
+@startuml
+
+interface DataStore {
+    read(fromPath)
+    save(toPath)
+}
+
+class FileStore {
+    read(fromPath)
+    save(toPath)
+}
+
+class HttpStore {
+    read(fromPath)
+    save(toPath)
+}
+
+DataStore <|-- FileStore
+DataStore <|-- HttpStore
+
+@enduml
