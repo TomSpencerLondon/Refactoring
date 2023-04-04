@@ -914,4 +914,11 @@ displayCustomers();
 
 ```
 
+#### Uninformative comments
+Comments can be helpful but they should be well written. Bad comments do not add any information that cannot
+be derived from the code itself. Good comments capture the reasoning behind complex code and should capture the intendeed
+usage of the code. Uninformative comments pollute the code base and make it harder to read. They also add overhead to code
+maintenance because they need to be updated. To fix comments, make the code clean and then delete comments that duplicate
+information from the code. Add comments that capture thought processes that are not clear from the code.
+
 
