@@ -81,5 +81,11 @@ understand why we are not providing functionality for some of the declared metho
 #### Dependency Inversion Principle
 High level modules should not depend on lower level modules both should depend on abstractions.
 
+![image](https://user-images.githubusercontent.com/27693622/229765399-1b4489f8-b07d-4f74-a7ff-89b26da7ba9a.png)
+
+We add a layer of decoupling between higher level modules and lower level modules we can swap out the FileStore and HttpStore
+without affecting the DataDisplay code. The DataDisplay does not depend on the implementation details of the
+possible DataStore.
+
 
 
