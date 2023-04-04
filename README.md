@@ -1,4 +1,9 @@
 ### Refactoring
+Refactoring: Improving the Design of Existing Code, Martin Fowler provides a good overview of
+Code Smells and ways to refactor them.
+This course is a good overview of the Code Smells:
+https://www.udemy.com/course/write-better-code-20-code-smells-how-to-fix-them
+
 1. Principles of designing SOLID code
 2. How not to write code
 
