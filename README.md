@@ -87,5 +87,198 @@ We add a layer of decoupling between higher level modules and lower level module
 without affecting the DataDisplay code. The DataDisplay does not depend on the implementation details of the
 possible DataStore.
 
+### Code Smells
+
+#### Repeated Switch statements
+Switch statements are not inherently bad but if we have the repeated switch statement happening this causes multiple 
+places to change code when the logic changes.
+
+```typescript
+class Calculator {
+  private _operations: { operation: string; oldValue: number; value: number }[] = [];
+  private _currentValue: number;
+
+  constructor(initialValue: number) {
+    this._currentValue = initialValue;
+  }
+
+  execute(operation: string, newValue: number) {
+    switch (operation) {
+      case "add":
+        this._operations.push({ operation: "add", oldValue: this._currentValue, value: newValue });
+        this._currentValue = this._currentValue + newValue;
+        return this;
+      case "subtract":
+        this._operations.push({
+          operation: "subtract",
+          oldValue: this._currentValue,
+          value: newValue,
+        });
+        this._currentValue = this._currentValue - newValue;
+        return this;
+      case "multiply":
+        this._operations.push({
+          operation: "multiply",
+          oldValue: this._currentValue,
+          value: newValue,
+        });
+        this._currentValue = this._currentValue * newValue;
+        return this;
+      case "divide":
+        this._operations.push({
+          operation: "divide",
+          oldValue: this._currentValue,
+          value: newValue,
+        });
+        this._currentValue = this._currentValue / newValue;
+        return this;
+      default:
+        throw new Error("Unsupported operation");
+    }
+  }
+
+  printOperations() {
+    for (const operationObj of this._operations) {
+      switch (operationObj.operation) {
+        case "add":
+          console.log(`${operationObj.oldValue} plus ${operationObj.value}`);
+          break;
+        case "subtract":
+          console.log(`${operationObj.oldValue} minus ${operationObj.value}`);
+          break;
+        case "multiply":
+          console.log(`${operationObj.oldValue} multiplied by ${operationObj.value}`);
+          break;
+        case "divide":
+          console.log(`${operationObj.oldValue} divided by ${operationObj.value}`);
+          break;
+      }
+    }
+    console.log("-----------");
+    console.log(`Total: ${this._currentValue}`);
+  }
+}
+
+const calculator = new Calculator(0);
+
+calculator
+  .execute("add", 10)
+  .execute("add", 20)
+  .execute("subtract", 15)
+  .execute("multiply", 3)
+  .execute("divide", 2)
+  .printOperations();
+
+export {};
+```
+
+The expected behaviour is as follows:
+```bash
+ npm start -- repeated-switches
+
+> code-smells@1.0.0 start
+> node scripts/run.js repeated-switches
 
 
+> code-smells@1.0.0 exec
+> ts-node ./src/repeated-switches/index.ts
+
+0 plus 10
+10 plus 20
+30 minus 15
+15 multiplied by 3
+45 divided by 2
+-----------
+Total: 22.5
+
+```
+To add another operation we would have to add the operation to both switch statements.
+How to fix?
+- encapsulate conditional logic
+- use polymorphism to remove conditional statements
+
+We refactor the switch statements by using an interface with different Operation implementations:
+
+```typescript
+class Calculator {
+    private _operations: Operation[] = [];
+    private _currentValue: number;
+
+    constructor(initialValue: number) {
+        this._currentValue = initialValue;
+    }
+
+    private createOperation(operation: String, newValue: number) {
+        switch (operation) {
+            case "add":
+                return new Add(this._currentValue, newValue);
+            case "subtract":
+                return new Subtract(this._currentValue, newValue);
+            case "multiply":
+                return new Multiply(this._currentValue, newValue);
+            case "divide":
+                return new Divide(this._currentValue, newValue);
+            default:
+                throw new Error("Unsupported operation");
+        }
+    }
+
+    add(newValue: number) {
+        return this.execOperation("add", newValue);
+    }
+
+    subtract(newValue: number) {
+        return this.execOperation("subtract", newValue);
+    }
+
+    multiplyBy(newValue: number) {
+        return this.execOperation("multiply", newValue);
+    }
+
+    divideBy(newValue: number) {
+        return this.execOperation("divide", newValue);
+    }
+
+    private execOperation(operation: 'add' | 'subtract' | 'multiply' | 'divide', newValue: number) {
+        const newOperation = this.createOperation(operation, newValue);
+        this._operations.push(newOperation);
+        this._currentValue = newOperation.operate();
+
+        return this;
+    }
+
+    printOperations() {
+        this._operations.forEach(operation => console.log(operation.toString()))
+        console.log("-----------");
+        console.log(`Total: ${this._currentValue}`);
+    }
+}
+
+const calculator = new Calculator(0);
+
+calculator
+    .add(10)
+    .add(20)
+    .subtract(15)
+    .multiplyBy(3)
+    .divideBy(2)
+    .printOperations();
+
+export {};
+```
+
+We still get the same result:
+```bash
+> ts-node ./src/repeated-switches/index.ts
+
+0 plus 10
+10 plus 20
+30 minus 15
+15 multiplied by 3
+45 divided by 2
+-----------
+Total: 22.5
+```
+
+This is the new design for the Calculator:
+![image](https://user-images.githubusercontent.com/27693622/229783085-d7997766-a43e-4597-9ffa-3e3bbd754899.png)

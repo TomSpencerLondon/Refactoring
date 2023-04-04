@@ -1,0 +1,58 @@
+@startuml
+
+class Calculator {
+    _operations: Operation[]
+    _currentValue: number
+
+    createOperation(operation: String, newValue: number): Operation
+    add(newValue: number)
+    subtract((newValue: number)
+    multiplyBy((newValue: number)
+    divideBy((newValue: number)
+    printOperations()
+}
+
+interface Operation {
+    operate(): number
+    toString(): string
+}
+
+class Add {
+    _oldValue: number
+    _newValue: number
+
+    operate(): number
+    toString(): string
+}
+
+class Subtract {
+    _oldValue: number
+    _newValue: number
+
+    operate(): number
+    toString(): string
+}
+
+class Multiply {
+    _oldValue: number
+    _newValue: number
+
+    operate(): number
+    toString(): string
+}
+
+class Divide {
+    _oldValue: number
+    _newValue: number
+
+    operate(): number
+    toString(): string
+}
+
+Calculator *-right- Operation
+Operation <|-- Add
+Operation <|-- Subtract
+Operation <|-- Multiply
+Operation <|-- Divide
+
+@enduml
