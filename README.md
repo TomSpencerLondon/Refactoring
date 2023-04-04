@@ -287,3 +287,144 @@ We have now centralised the switch statement in the createOperation function. Th
 and the rest of the application depends on abstractions. Now we don't use concrete instances. The only place we see concrete
 instances is inside the factory function.
 
+#### Primitive Obsession
+Primitives spread through an application when we don't add types to deal with domain behaviour and logic.
+When we use primitives we lose the advantages of hiding and encapsulation. The code smell can lead to duplication of knowledge
+when we are dealing with validation. It is also easy to forget duplicated primitives when making behaviour changes.
+To fix this code smell we should model domain behaviour and non-primitive knowledge in custom types.
+
+```typescript
+
+class Customer {
+  private _id: string;
+  private _name: string;
+  private _address: string;
+  private _phone: string;
+  private _email: string;
+  private readonly EMAIL_REGEX = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+  private readonly PHONE_REGEX = /\d{2}\ \d{8}/;
+
+  constructor(name: string, address: string, phone: string, email: string, id?: string) {
+    this._id = id || uuidV4();
+    this._name = name;
+    this._address = address;
+    this._phone = phone;
+    this._email = email;
+  }
+
+  isEmailValid() {
+    return this.EMAIL_REGEX.test(this._email);
+  }
+
+  isPhoneValid() {
+    return this.PHONE_REGEX.test(this._phone);
+  }
+
+  getPhoneAreaCode() {
+    return this._phone.split(" ")[0];
+  }
+
+  getPhoneNumber() {
+    return this._phone.split(" ")[1];
+  }
+}
+
+export {};
+
+```
+The above logic could be duplicated through several classes.
+We can refactor the logic into separate Email and Phone classes with their own validation logic:
+
+```typescript
+
+type CustomerRawData = {
+  name: string;
+  address: string;
+  phone: string;
+  email: string;
+  id?: string
+}
+
+class Email {
+  private _emailValue: string;
+  private readonly EMAIL_REGEX = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+
+  constructor(emailValue: string) {
+    this._emailValue = emailValue;
+  }
+
+  isValid() {
+    return this.EMAIL_REGEX.test(this._emailValue);
+  }
+
+}
+
+class Phone {
+  private _areaCode: string;
+  private _phoneNumber: string;
+  
+  constructor(phoneValue: string) {
+    const phoneComponents = phoneValue.split(" ");
+    this._areaCode = phoneComponents[0];
+    this._phoneNumber = phoneComponents[1];
+  }
+
+  isValid() {
+    return this._areaCode.length == 2 && this._phoneNumber.length == 8;
+  }
+
+  getAreaCode() {
+    return this._areaCode;
+  }
+
+  getNumber() {
+    return this._phoneNumber;
+  }
+}
+
+class Customer {
+  private _id: string;
+  private _name: string;
+  private _address: string;
+  private _phone: Phone;
+  private _email: Email;
+
+  constructor(customerData: CustomerRawData) {
+    const {name, address, phone, email, id} = customerData;
+    this._id = id || uuidV4();
+    this._name = name;
+    this._address = address;
+    this._phone = new Phone(phone);
+    this._email = new Email(email);
+  }
+
+  getEmail() {
+    return this._email;
+  }
+
+  getPhone() {
+    return this._phone;
+  }
+}
+
+const myCustomer = new Customer({
+  name: 'Tom',
+  address: 'Street 123',
+  phone: '12 34567890',
+  email: 'tom@example.com'
+})
+
+console.log(myCustomer.getEmail().isValid());
+console.log(myCustomer.getPhone().isValid());
+console.log(myCustomer.getPhone().getAreaCode());
+
+export {};
+
+```
+
+### Loops
+Adding too many loops can quickly make it confusing to read and hard to maintain.
+Hardcoding loops in code can break the rules of information hiding and encapsulation.
+Too many loops can make code harder to maintain.
+
+
