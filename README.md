@@ -46,5 +46,6 @@ lead to high coupling.
 
 ![image](https://user-images.githubusercontent.com/27693622/229745702-6f896484-f69d-48b2-875c-ae51c9cfa95a.png)
 
-
-
+Here the Order Manager groups Inventory Management, Shipment Management and Invoice Management in the same class.
+This has led to direct dependencies and coupling between the classes. This means that changes in one part of the code
+affect other parts of the code and there is tight coupling.
