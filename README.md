@@ -284,5 +284,6 @@ This is the new design for the Calculator:
 ![image](https://user-images.githubusercontent.com/27693622/229783085-d7997766-a43e-4597-9ffa-3e3bbd754899.png)
 
 We have now centralised the switch statement in the createOperation function. The factory function encapsulates everything
-and the rest of the application depends on abstractions.
+and the rest of the application depends on abstractions. Now we don't use concrete instances. The only place we see concrete
+instances is inside the factory function.
 
