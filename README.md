@@ -425,6 +425,488 @@ export {};
 ### Loops
 Adding too many loops can quickly make it confusing to read and hard to maintain.
 Hardcoding loops in code can break the rules of information hiding and encapsulation.
-Too many loops can make code harder to maintain.
+Too many loops can make code harder to maintain. Instead of hardcoding the loops we can use pipeline structures (.map, .filter, .reduce)
+to abstract the iteration logic and focus on how the elements of the collection are being filtered.
+
+```typescript
+type CsvObject = {
+  headers: string;
+  lines: string[];
+};
+
+const convertRecordsToCsvObject = (records: Record<string, string | undefined>[]): CsvObject => {
+  if (records.length === 0) {
+    return {
+      headers: "",
+      lines: [],
+    };
+  }
+
+  let headers = "";
+
+  for (const key of Object.keys(records[0])) {
+    headers += `${key},`;
+  }
+
+  headers = headers.slice(0, -1);
+
+  const lines = [];
+
+  for (const record of records) {
+    let line = "";
+
+    for (const value of Object.values(record)) {
+      line += `${value},`;
+    }
+
+    line = line.slice(0, -1);
+    lines.push(line);
+  }
+
+  return {
+    headers,
+    lines,
+  };
+};
+
+console.log(
+  convertRecordsToCsvObject([
+    {
+      name: "John",
+      dateOfBirth: "1990-01-01",
+      email: "john@example.com",
+    },
+    {
+      name: "Jane",
+      dateOfBirth: "1992-01-01",
+      email: "jane@example.com",
+    },
+  ])
+);
+
+export {};
+
+```
+This outputs the following result:
+```bash
+{
+  headers: 'name,dateOfBirth,email',
+  lines: [
+    'John,1990-01-01,john@example.com',
+    'Jane,1992-01-01,jane@example.com'
+  ]
+}
+
+```
+
+The loops above force us to code implementation details in the functions that use them.
+The more loops we have, the more cognitive load.
+
+```typescript
+type CsvObject = {
+    headers: string;
+    lines: string[];
+};
+
+const convertRecordsToCsvObject = (records: Record<string, string | undefined>[]): CsvObject => ({
+    headers: Object.keys(records[0] || {}).join(",").slice(0, -1),
+    lines: records.map(record => Object.values(record).join(",").slice(0, -1))
+});
+
+console.log(
+    convertRecordsToCsvObject([
+        {
+            name: "John",
+            dateOfBirth: "1990-01-01",
+            email: "john@example.com",
+        },
+        {
+            name: "Jane",
+            dateOfBirth: "1992-01-01",
+            email: "jane@example.com",
+        },
+    ])
+);
+
+console.log(convertRecordsToCsvObject([]))
+
+export {};
+
+```
+
+The above join and map functions allow us to reduce the amount of code in the Record class and the code is cleaner, easier to
+maintain and easier to read.
+
+#### Long parameter list
+Alongside the eponymous code smell, flag parameters are also considered bad because they are used soley to determine which path the method
+must execute and make it harder to reason about the method's overall behaviour and intention.
+We should substitute data parameters with a single data object parameter. We can also use another parameter to extract the information
+of other parameters and we should also avoid using flag parameters.
+
+This is the code pre-refactoring:
+```typescript
+interface Customer {
+  getIdentifier(): string;
+  getAddress(): string;
+  hasPremiumSubscription(): boolean;
+}
+
+class Order {
+  private _id: string;
+  private _customerId: string;
+  private _customerAddress: string;
+  private _hasPriority: boolean;
+  private _productIds: string[];
+
+  constructor(
+    id: string,
+    customerId: string,
+    customerAddress: string,
+    productIds: string[],
+    isPremiumCustomer: boolean
+  ) {
+    this._id = id;
+    this._customerId = customerId;
+    this._customerAddress = customerAddress;
+    this._productIds = productIds;
+    this._hasPriority = isPremiumCustomer;
+  }
+
+  getProductIds() {
+    return this._productIds;
+  }
+
+  getCustomerId() {
+    return this._customerId;
+  }
+}
+
+export {};
+
+```
+
+
+This is the refactored version:
+
+```typescript
+interface ICustomer {
+  getIdentifier(): string;
+
+  getAddress(): string;
+
+  hasPremiumSubscription(): boolean;
+}
+
+type OrderRawData = {
+  id?: string,
+  customer: ICustomer,
+  productIds: string[]
+}
+
+interface IOrder {
+  getProductIds(): string[];
+
+  getCustomerId(): string;
+
+  getDeliveryDays(): number;
+}
+
+class StandardOrder implements IOrder {
+  private _id: string | undefined;
+  private _customerId: string;
+  private _customerAddress: string;
+  private _hasPriority: boolean;
+  private _productIds: string[];
+
+  constructor(
+    orderData: OrderRawData
+  ) {
+    const { id, customer, productIds } = orderData;
+    this._id = id;
+    this._customerId = customer.getIdentifier();
+    this._customerAddress = customer.getAddress();
+    this._productIds = productIds;
+    this._hasPriority = customer.hasPremiumSubscription();
+  }
+
+  getProductIds() {
+    return this._productIds;
+  }
+
+  getCustomerId() {
+    return this._customerId;
+  }
+
+  getDeliveryDays(): number {
+    return 3;
+  }
+}
+
+
+
+class PremiumOrder implements IOrder {
+  private _id: string | undefined;
+  private _customerId: string;
+  private _customerAddress: string;
+  private _hasPriority: boolean;
+  private _productIds: string[];
+
+  constructor(
+    orderData: OrderRawData
+  ) {
+    const { id, customer, productIds } = orderData;
+    this._id = id;
+    this._customerId = customer.getIdentifier();
+    this._customerAddress = customer.getAddress();
+    this._productIds = productIds;
+    this._hasPriority = customer.hasPremiumSubscription();
+  }
+
+  getProductIds() {
+    return this._productIds;
+  }
+
+  getCustomerId() {
+    return this._customerId;
+  }
+
+  getDeliveryDays(): number {
+    return 1;
+  }
+}
+
+
+const printDeliveryDays = (order: IOrder) => console.log(order.getDeliveryDays());
+
+// Priority orders have 1 day
+class Customer implements ICustomer {
+  private _id: string;
+  private _address: string;
+  private _subscriptionType: 'premium' | 'standard';
+
+  constructor(id: string, address: string, subscriptionType: 'premium' | 'standard') {
+    this._id = id;
+    this._address = address;
+    this._subscriptionType = subscriptionType;
+  }
+
+  getIdentifier(): string {
+    return this._id;
+  }
+
+  getAddress(): string {
+    return this._address;
+  }
+
+  hasPremiumSubscription(): boolean {
+    return this._subscriptionType == 'premium';
+  }
+}
+
+const orderFactory = (orderRawData: OrderRawData): IOrder => {
+  if (orderRawData.customer.hasPremiumSubscription()) {
+    return new PremiumOrder(orderRawData);
+  } else {
+    return new StandardOrder(orderRawData);
+  }
+}
+
+const standard = orderFactory({
+  customer: new Customer("1", "address", 'standard'),
+  productIds: []
+});
+
+const premium = orderFactory({
+  customer: new Customer("1", "address", 'premium'),
+  productIds: []
+});
+
+printDeliveryDays(standard)
+printDeliveryDays(premium)
+
+export {};
+
+```
+In the refactored version we have reduced the parameters and used polymorphism to allow us to delete the flag parameter.
+
+#### Knowledge Duplication
+
+When the same codified knowledge is found in multiple places. Similar code is acceptable, sometimes we have similar processes
+, but they should represent different pieces of knowledge. If there are units which refer to the same units of knowledge
+then this can cause bugs when behaviour is changed. To fix this we extract the duplicate knowledge into helper functions or classes.
+We do need to ensure that the helper functions or classes follow SOLID principles. We should not extract similar code that represents different knowledge.
+
+```typescript
+import { parseCustomerData, readCustomerProperties, readCustomersFromCsv } from "./utils";
+
+const sendEmails = async () => {
+  const customerLines = await readCustomersFromCsv();
+  const customerProperties = await readCustomerProperties();
+  const customers = parseCustomerData(customerLines, customerProperties);
+
+  for (const customer of customers) {
+    if (Boolean(customer.email)) {
+      let emailMessage = "Hello " + customer.name + ",\n";
+      emailMessage += "Thank you for subscribing to our newsletter!\n";
+
+      console.log(emailMessage);
+    }
+  }
+};
+
+const displayCustomers = async () => {
+  const customerLines = await readCustomersFromCsv();
+  const customerProperties = await readCustomerProperties();
+  const customers = parseCustomerData(customerLines, customerProperties);
+
+  for (const customer of customers) {
+    console.log("---\n");
+    console.log(
+      `Name: ${customer.name}\nEmail: ${customer.email || "None"}\nPhone: ${
+        customer.phone || "None"
+      }\n`
+    );
+  }
+};
+
+sendEmails();
+displayCustomers();
+```
+
+First we eliminate the loops:
+
+```typescript
+import { parseCustomerData, readCustomerProperties, readCustomersFromCsv } from "./utils";
+
+type CustomerRawData = {
+  name: string | undefined,
+  phone: string | undefined,
+  email: string | undefined,
+}
+
+const sendEmail =  (customer: CustomerRawData) => {
+  let emailMessage = "Hello " + customer.name + ",\n";
+  emailMessage += "Thank you for subscribing to our newsletter!\n";
+
+  console.log(emailMessage);
+}
+
+const sendEmails = async () => {
+  const customerLines = await readCustomersFromCsv();
+  const customerProperties = await readCustomerProperties();
+  const customers = parseCustomerData(customerLines, customerProperties);
+  customers
+    .filter(customer => Boolean(customer.email))
+    .forEach(customer => sendEmail(customer as CustomerRawData));
+};
+
+
+const displayCustomer = (customer: CustomerRawData) => {
+  console.log("---\n");
+  console.log(
+    `Name: ${customer.name}\nEmail: ${customer.email || "None"}\nPhone: ${
+      customer.phone || "None"
+    }\n`
+  );
+}
+const displayCustomers = async () => {
+  const customerLines = await readCustomersFromCsv();
+  const customerProperties = await readCustomerProperties();
+  const customers = parseCustomerData(customerLines, customerProperties);
+  customers.forEach(customer => displayCustomer(customer as CustomerRawData));
+};
+
+sendEmails();
+displayCustomers();
+
+```
+
+We also refactor the customerData.ts file to return customers instead of showing the detailed working of the code:
+
+```typescript
+import fs from "fs";
+import path from "path";
+import readline from "readline";
+
+export const readCustomersFromCsv = async (): Promise<Record<string, string | undefined>[]> => {
+  const fileReader = fs.createReadStream(path.resolve(__dirname + "/customerData.csv"));
+  const lineReader = readline.createInterface({
+    input: fileReader,
+    crlfDelay: Infinity,
+  });
+  let lineCounter = 0;
+  const customerLines: string[] = [];
+  const customerProperties = [];
+
+  for await (const l of lineReader) {
+    if (lineCounter === 0) {
+      customerProperties.push(...l.split(","));
+    }else {
+      customerLines.push(l);
+    }
+
+    lineCounter++;
+  }
+
+  const customers = [];
+
+  for (const line of customerLines) {
+    const customer: { [index: string]: string | undefined } = {};
+    const customerData = line.split(",");
+
+    for (let i = 0; i < customerProperties.length; i++) {
+      customer[customerProperties[i]] = Boolean(customerData[i]) ? customerData[i] : undefined;
+    }
+
+    customers.push(customer);
+  }
+
+  return customers;
+};
+
+```
+
+The code now simply expects a list of Customers in each function:
+```typescript
+import { readCustomersFromCsv } from "./utils";
+
+type CustomerRawData = {
+  name: string | undefined,
+  phone: string | undefined,
+  email: string | undefined,
+}
+
+const sendEmail =  (customer: CustomerRawData) => {
+  let emailMessage = "Hello " + customer.name + ",\n";
+  emailMessage += "Thank you for subscribing to our newsletter!\n";
+
+  console.log(emailMessage);
+}
+
+const sendEmails = async () => {
+  const customers = await readCustomersFromCsv();
+  customers
+    .filter(customer => Boolean(customer.email))
+    .forEach(customer => sendEmail(customer as CustomerRawData));
+};
+
+
+const displayCustomer = (customer: CustomerRawData) => {
+  console.log("---\n");
+  console.log(
+    `Name: ${customer.name}\nEmail: ${customer.email || "None"}\nPhone: ${
+      customer.phone || "None"
+    }\n`
+  );
+}
+const displayCustomers = async () => {
+  const customers = await readCustomersFromCsv();
+  customers.forEach(customer => displayCustomer(customer as CustomerRawData));
+};
+
+sendEmails();
+displayCustomers();
+
+```
 
 

@@ -3,40 +3,10 @@ type CsvObject = {
   lines: string[];
 };
 
-const convertRecordsToCsvObject = (records: Record<string, string | undefined>[]): CsvObject => {
-  if (records.length === 0) {
-    return {
-      headers: "",
-      lines: [],
-    };
-  }
-
-  let headers = "";
-
-  for (const key of Object.keys(records[0])) {
-    headers += `${key},`;
-  }
-
-  headers = headers.slice(0, -1);
-
-  const lines = [];
-
-  for (const record of records) {
-    let line = "";
-
-    for (const value of Object.values(record)) {
-      line += `${value},`;
-    }
-
-    line = line.slice(0, -1);
-    lines.push(line);
-  }
-
-  return {
-    headers,
-    lines,
-  };
-};
+const convertRecordsToCsvObject = (records: Record<string, string | undefined>[]): CsvObject => ({
+    headers: Object.keys(records[0] || {}).join(",").slice(0, -1),
+    lines: records.map(record => Object.values(record).join(",").slice(0, -1))
+});
 
 console.log(
   convertRecordsToCsvObject([
@@ -52,5 +22,7 @@ console.log(
     },
   ])
 );
+
+console.log(convertRecordsToCsvObject([]))
 
 export {};
