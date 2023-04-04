@@ -44,6 +44,7 @@ client code.
 Entities should have one reason to change and encode one part of domain knowledge. Breaking this principle can
 lead to high coupling.
 
+![image](https://user-images.githubusercontent.com/27693622/229745702-6f896484-f69d-48b2-875c-ae51c9cfa95a.png)
 
 
 
