@@ -20,6 +20,7 @@ Other modules should only see the important parts of functionality of classes.
 We should not expose how we carry out the functionality. We try to find which abstractions
 can be decomposed from the product to achieve the functionality.
 
+![image](https://user-images.githubusercontent.com/27693622/229740102-1592015a-4110-4c04-baa8-4c3dc2704a86.png)
 
 
 
